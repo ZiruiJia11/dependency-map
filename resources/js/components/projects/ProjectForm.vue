@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
-import type { RouteFormDefinition } from '@/wayfinder';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Project } from '@/types';
+import type { RouteFormDefinition } from '@/wayfinder';
 
 defineProps<{
     // Wayfinder supplies the correct create or method-spoofed update action.

@@ -2,9 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Network, Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
+import DependencyForm from '@/components/dependencies/DependencyForm.vue';
 import NodeForm from '@/components/nodes/NodeForm.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -15,18 +16,16 @@ import {
 } from '@/components/ui/dialog';
 import { destroy, edit, index } from '@/routes/projects';
 import {
+    store as storeDependency,
+    update as updateDependency,
+    destroy as destroyDependency,
+} from '@/routes/projects/dependencies';
+import {
     destroy as destroyNode,
     store as storeNode,
     update as updateNode,
 } from '@/routes/projects/nodes';
 import type { Dependency, Node, Project } from '@/types';
-
-import DependencyForm from '@/components/dependencies/DependencyForm.vue';
-import {
-    store as storeDependency,
-    update as updateDependency,
-    destroy as destroyDependency,
-} from '@/routes/projects/dependencies';
 
 const props = defineProps<{
     project: Project;
