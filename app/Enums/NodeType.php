@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+/** Supported categories used to classify nodes throughout the map. */
 enum NodeType: string
 {
     case Task = 'task';

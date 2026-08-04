@@ -4,6 +4,7 @@ use App\Models\Project;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
+// Project feature tests cover authentication, ownership, validation, and CRUD responses.
 test('guests cannot access projects', function () {
     $this->get(route('projects.index'))
         ->assertRedirect(route('login'));

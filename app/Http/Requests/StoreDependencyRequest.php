@@ -16,6 +16,7 @@ class StoreDependencyRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        // Dependencies inherit their management permission from the project.
         $project = $this->route('project');
 
         return $project instanceof Project
@@ -31,6 +32,7 @@ class StoreDependencyRequest extends FormRequest
     {
         $project = $this->route('project');
 
+        // Scoped existence checks prevent connections to nodes in other projects.
         return [
             'source_node_id' => [
                 'required',
@@ -57,6 +59,7 @@ class StoreDependencyRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
+                // Skip the duplicate query when basic validation has already failed.
                 if ($validator->errors()->isNotEmpty()) {
                     return;
                 }
@@ -78,6 +81,7 @@ class StoreDependencyRequest extends FormRequest
                     )
                     ->exists();
 
+                // Direction matters: A -> B remains distinct from B -> A.
                 if ($alreadyExists) {
                     $validator->errors()->add(
                         'target_node_id',

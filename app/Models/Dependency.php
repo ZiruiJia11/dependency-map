@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'target_node_id',
     'description',
 ])]
+/**
+ * A directed connection from one project node to another.
+ */
 class Dependency extends Model
 {
     /** @use HasFactory<DependencyFactory> */

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('nodes', function (Blueprint $table) {
             $table->id();
+            // Nodes cannot outlive the project whose map contains them.
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();

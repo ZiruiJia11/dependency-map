@@ -8,13 +8,16 @@ import { Label } from '@/components/ui/label';
 import type { Project } from '@/types';
 
 defineProps<{
+    // Wayfinder supplies the correct create or method-spoofed update action.
     action: RouteFormDefinition<'post'>;
+    // When present, the same form operates in edit mode with existing values.
     project?: Project;
     submitLabel: string;
 }>();
 </script>
 
 <template>
+    <!-- Inertia handles submission state and maps Laravel validation errors. -->
     <Form v-bind="action" class="space-y-6" #default="{ errors, processing }">
         <div class="grid gap-2">
             <Label for="name">Name</Label>

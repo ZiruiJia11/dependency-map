@@ -9,6 +9,7 @@ use App\Models\User;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertModelMissing;
 
+// Node CRUD tests verify nested project access, enum validation, and persistence.
 test('project owners can create nodes', function () {
     /** @var User $user */
     $user = User::factory()->createOne();

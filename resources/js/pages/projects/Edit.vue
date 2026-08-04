@@ -23,12 +23,13 @@ defineOptions({
 </script>
 
 <template>
-    <Head :title="'Edit ${project.name}'" />
+    <Head :title="`Edit ${project.name}`" />
 
-    <div class="max-w-3x1 mx-auto flex w-full flex-col gap-6 p-4">
+    <!-- Passing the project preloads the same form used by the create page. -->
+    <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
         <div class="flex items-start justify-between gap-4">
             <div>
-                <h1 class="text-2x1 font-semibold tracking-tight">
+                <h1 class="text-2xl font-semibold tracking-tight">
                     Edit Project
                 </h1>
                 <p class="my-1 text-sm text-muted-foreground">

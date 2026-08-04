@@ -20,6 +20,7 @@ class NodeFactory extends Factory
      */
     public function definition(): array
     {
+        // Enum instances exercise the model casts used by production writes.
         return [
             'project_id' => Project::factory(),
             'name' => fake()->sentence(3),

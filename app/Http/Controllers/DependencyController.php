@@ -12,6 +12,7 @@ use Inertia\Inertia;
 
 class DependencyController extends Controller
 {
+    /** Create a validated directed connection inside the current project. */
     public function store(
         StoreDependencyRequest $request,
         Project $project,
@@ -28,6 +29,7 @@ class DependencyController extends Controller
         return to_route('projects.show', $project);
     }
 
+    /** Update an existing connection without allowing its project to change. */
     public function update(
         UpdateDependencyRequest $request,
         Project $project,
@@ -45,6 +47,7 @@ class DependencyController extends Controller
         return to_route('projects.show', $project);
     }
 
+    /** Delete only within the current project's dependency relationship. */
     public function destroy(
         Project $project,
         Dependency $dependency,

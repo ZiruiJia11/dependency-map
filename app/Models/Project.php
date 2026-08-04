@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['user_id', 'name', 'description'])]
+/**
+ * A user-owned dependency map that groups its nodes and directed dependencies.
+ */
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */

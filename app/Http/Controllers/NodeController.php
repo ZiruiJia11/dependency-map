@@ -12,6 +12,7 @@ use Inertia\Inertia;
 
 class NodeController extends Controller
 {
+    /** Create a node through the project relationship so project_id is trusted. */
     public function store(
         StoreNodeRequest $request,
         Project $project,
@@ -28,6 +29,7 @@ class NodeController extends Controller
         return to_route('projects.show', $project);
     }
 
+    /** Update a node after nested binding and request validation have succeeded. */
     public function update(
         UpdateNodeRequest $request,
         Project $project,
@@ -45,6 +47,7 @@ class NodeController extends Controller
         return to_route('projects.show', $project);
     }
 
+    /** Delete only within the current project's node relationship. */
     public function destroy(
         Project $project,
         Node $node,

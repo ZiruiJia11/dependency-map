@@ -14,6 +14,7 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
+    /** Display only projects owned by the authenticated user. */
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Project::class);
@@ -51,6 +52,7 @@ class ProjectController extends Controller
         return to_route('projects.show', $project);
     }
 
+    /** Show a project with all data needed by the dependency-map page. */
     public function show(Project $project): Response
     {
         Gate::authorize('view', $project);
@@ -104,6 +106,7 @@ class ProjectController extends Controller
 
     private function authenticatedUser(Request $request): User
     {
+        // Narrow the framework contract to the concrete application User model.
         $user = $request->user();
 
         abort_unless($user instanceof User, 401);

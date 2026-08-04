@@ -18,6 +18,7 @@ class ProjectFactory extends Factory
      */
     public function definition(): array
     {
+        // A generated project always has an owner so policy tests are realistic.
         return [
             'user_id' => User::factory(),
             'name' => fake()->sentence(3),

@@ -8,7 +8,9 @@ import type { Node } from '@/types';
 import type { RouteFormDefinition } from '@/wayfinder';
 
 defineProps<{
+    // Both store.form() and update.form() are HTML POST form definitions.
     action: RouteFormDefinition<'post'>;
+    // An existing node switches this reusable component into edit mode.
     node?: Node;
     submitLabel: string;
 }>();
@@ -27,15 +29,17 @@ const nodeTypes = [
     { value: 'other', label: 'Other' },
 ] as const;
 
+// These options mirror the backend NodeStatus enum values.
 const nodeStatuses = [
     { value: 'normal', label: 'Normal' },
     { value: 'at_risk', label: 'At risk' },
     { value: 'blocked', label: 'Blocked' },
-    { value: 'complete', label: 'Complete' },
+    { value: 'completed', label: 'Complete' },
 ] as const;
 </script>
 
 <template>
+    <!-- A successful Inertia submission lets the parent close its dialog. -->
     <Form
         v-bind="action"
         class="space-y-5"

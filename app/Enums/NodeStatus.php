@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+/** Lifecycle and risk states available for every node. */
 enum NodeStatus: string
 {
     case Normal = 'normal';

@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 
 class UpdateNodeRequest extends FormRequest
 {
+    /** Verify ownership and the nested project-node relationship. */
     public function authorize(): bool
     {
         $project = $this->route('project');
@@ -23,9 +24,7 @@ class UpdateNodeRequest extends FormRequest
             && ($this->user()?->can('update', $project) ?? false);
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    /** @return array<string, ValidationRule|array<mixed>|string> */
     public function rules(): array
     {
         return [

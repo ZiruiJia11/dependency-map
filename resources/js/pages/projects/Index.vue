@@ -24,6 +24,7 @@ defineOptions({
 <template>
     <Head title="Projects" />
 
+    <!-- This page receives an ownership-filtered project collection from Laravel. -->
     <div class="flex flex-col gap-6 p-4">
         <div class="flex items-start justify-between gap-4">
             <div>
@@ -41,6 +42,7 @@ defineOptions({
             </Button>
         </div>
 
+        <!-- Keep first-use guidance separate from the project card grid. -->
         <div
             v-if="projects.length === 0"
             class="flex min-h-72 flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-8 text-center"

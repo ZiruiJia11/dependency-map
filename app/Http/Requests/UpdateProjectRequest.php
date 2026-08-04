@@ -8,9 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProjectRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    /** Authorize updates against the concrete project resolved from the route. */
     public function authorize(): bool
     {
         $project = $this->route('project');
@@ -19,11 +17,7 @@ class UpdateProjectRequest extends FormRequest
             && ($this->user()?->can('update', $project) ?? false);
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    /** @return array<string, ValidationRule|array<mixed>|string> */
     public function rules(): array
     {
         return [

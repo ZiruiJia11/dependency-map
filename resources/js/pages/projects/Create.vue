@@ -24,8 +24,9 @@ defineOptions({
 <template>
     <Head title="Create project" />
 
+    <!-- The shared ProjectForm operates in create mode when no project is passed. -->
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-        <div class="item-start flex justify-between gap-4">
+        <div class="flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight">
                     Create project

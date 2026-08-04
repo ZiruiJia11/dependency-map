@@ -19,6 +19,7 @@ class DependencyFactory extends Factory
      */
     public function definition(): array
     {
+        // Tests that need a shared project override these related factories explicitly.
         return [
             'project_id' => Project::factory(),
             'source_node_id' => Node::factory(),

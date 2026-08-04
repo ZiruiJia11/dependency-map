@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Provide one predictable local account and delegate domain data to its seeder.
         $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

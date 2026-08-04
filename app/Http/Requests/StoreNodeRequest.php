@@ -11,9 +11,7 @@ use Illuminate\Validation\Rule;
 
 class StoreNodeRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    /** Inherit node-management permission from the parent project. */
     public function authorize(): bool
     {
         $project = $this->route('project');
@@ -23,7 +21,7 @@ class StoreNodeRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Restrict type and status to the supported domain enums.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */

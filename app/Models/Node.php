@@ -20,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'position_x',
     'position_y',
 ])]
+/**
+ * A component in a project that can be the source or target of dependencies.
+ */
 class Node extends Model
 {
     /** @use HasFactory<NodeFactory> */
@@ -55,6 +58,7 @@ class Node extends Model
 
     protected function casts(): array
     {
+        // Enum casts keep stored strings aligned with the domain's allowed values.
         return [
             'type' => NodeType::class,
             'status' => NodeStatus::class,

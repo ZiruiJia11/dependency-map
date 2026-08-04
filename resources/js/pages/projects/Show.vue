@@ -19,17 +19,29 @@ import {
     store as storeNode,
     update as updateNode,
 } from '@/routes/projects/nodes';
-import type { Node, Project } from '@/types';
+import type { Dependency, Node, Project } from '@/types';
+
+import DependencyForm from '@/components/dependencies/DependencyForm.vue';
+import {
+    store as storeDependency,
+    update as updateDependency,
+    destroy as destroyDependency,
+} from '@/routes/projects/dependencies';
 
 const props = defineProps<{
     project: Project;
 }>();
 
+// Each dialog owns independent state so node and dependency workflows do not conflict.
 const isCreateNodeOpen = ref(false);
+const isCreateDependencyOpen = ref(false);
+const isEditDependencyOpen = ref(false);
+const editingDependency = ref<Dependency | null>(null);
 const isEditNodeOpen = ref(false);
 const editingNode = ref<Node | null>(null);
 
 function openEditNode(node: Node): void {
+    // Store the selected row so the shared form can prefill its current values.
     editingNode.value = node;
     isEditNodeOpen.value = true;
 }
@@ -40,6 +52,7 @@ function finishEditNode(): void {
 }
 
 function deleteNode(node: Node): void {
+    // Destructive actions require explicit confirmation before the Inertia request.
     const confirmed = window.confirm(
         `Are you sure you want to delete the node "${node.name}"? This action cannot be undone.`,
     );
@@ -70,6 +83,39 @@ function deleteProject(): void {
 
     router.delete(destroy.url(props.project));
 }
+
+function openEditDependency(dependency: Dependency): void {
+    // The edit dialog reuses DependencyForm with this selected connection.
+    editingDependency.value = dependency;
+    isEditDependencyOpen.value = true;
+}
+
+function finishEditDependency(): void {
+    isEditDependencyOpen.value = false;
+    editingDependency.value = null;
+}
+
+function deleteDependency(dependency: Dependency): void {
+    // Wayfinder builds the nested project/dependency URL without hardcoding IDs.
+    const confirmed = window.confirm(
+        `Are you sure you want to delete the dependency from "${dependency.source_node.name}" to "${dependency.target_node.name}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete(
+        destroyDependency.url({
+            project: props.project,
+            dependency,
+        }),
+        {
+            preserveScroll: true,
+        },
+    );
+}
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -86,6 +132,7 @@ defineOptions({
     <Head :title="project.name" />
 
     <div class="flex flex-col gap-6 p-4">
+        <!-- Project identity and top-level actions. -->
         <div class="flex flex-col gap-6">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -121,6 +168,7 @@ defineOptions({
             </div>
         </div>
 
+        <!-- Reserved canvas area for the future interactive dependency graph. -->
         <section
             class="flex min-h-72 flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/20 p-8 text-center"
         >
@@ -140,6 +188,7 @@ defineOptions({
         </section>
 
         <div class="grid gap-6 lg:grid-cols-2">
+            <!-- Node CRUD is managed inline so users stay on the project page. -->
             <section class="rounded-xl border bg-card text-card-foreground">
                 <div
                     class="flex items-start justify-between gap-4 border-b p-5"
@@ -232,6 +281,31 @@ defineOptions({
                     </div>
                 </div>
 
+                <Dialog v-model:open="isEditDependencyOpen">
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit dependency</DialogTitle>
+                            <DialogDescription>
+                                Update this dependency's details.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <DependencyForm
+                            v-if="editingDependency"
+                            :action="
+                                updateDependency.form({
+                                    project,
+                                    dependency: editingDependency,
+                                })
+                            "
+                            :dependency="editingDependency"
+                            :nodes="project.nodes ?? []"
+                            submit-label="Save changes"
+                            @success="finishEditDependency"
+                        />
+                    </DialogContent>
+                </Dialog>
+
                 <Dialog v-model:open="isEditNodeOpen">
                     <DialogContent>
                         <DialogHeader>
@@ -257,14 +331,49 @@ defineOptions({
                 </Dialog>
             </section>
 
+            <!-- Directed dependencies connect two nodes from this project. -->
             <section class="rounded-xl border bg-card text-card-foreground">
-                <div class="border-b p-5">
-                    <h2 class="font-semibold">Dependencies</h2>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Dependencies represent the relationships between nodes
-                        in your project. They help you understand how different
-                        components interact and rely on each other.
-                    </p>
+                <div
+                    class="flex items-start justify-between gap-4 border-b p-5"
+                >
+                    <div>
+                        <h2 class="font-semibold">Dependencies</h2>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            Dependencies represent the relationships between
+                            nodes in your project. They help you understand how
+                            different components interact and rely on each
+                            other.
+                        </p>
+                    </div>
+
+                    <Dialog v-model:open="isCreateDependencyOpen">
+                        <DialogTrigger as-child>
+                            <Button
+                                size="sm"
+                                :disabled="(project.nodes?.length ?? 0) < 2"
+                            >
+                                <Plus class="size-4" />
+                                Add dependency
+                            </Button>
+                        </DialogTrigger>
+
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add dependency</DialogTitle>
+                                <DialogDescription>
+                                    Connect two nodes to represent a
+                                    relationship between them.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <DependencyForm
+                                :action="storeDependency.form(project)"
+                                :nodes="project.nodes ?? []"
+                                submit-label="Create dependency"
+                                @success="isCreateDependencyOpen = false"
+                            />
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <div
@@ -279,19 +388,41 @@ defineOptions({
                     <div
                         v-for="dependency in project.dependencies"
                         :key="dependency.id"
-                        class="p-5"
+                        class="flex items-start justify-between gap-4 p-5"
                     >
-                        <p class="text-sm font-medium">
-                            {{ dependency.source_node.name }}
-                            <span class="text-muted-foreground">→</span>
-                            {{ dependency.target_node.name }}
-                        </p>
-                        <p
-                            v-if="dependency.description"
-                            class="mt-1 text-sm text-muted-foreground"
+                        <div>
+                            <p class="text-sm font-medium">
+                                {{ dependency.source_node.name }}
+                                <span class="text-muted-foreground">→</span>
+                                {{ dependency.target_node.name }}
+                            </p>
+
+                            <p
+                                v-if="dependency.description"
+                                class="mt-1 text-sm text-muted-foreground"
+                            >
+                                {{ dependency.description }}
+                            </p>
+                        </div>
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            :aria-label="`Edit dependency from ${dependency.source_node.name} to ${dependency.target_node.name}`"
+                            @click="openEditDependency(dependency)"
                         >
-                            {{ dependency.description }}
-                        </p>
+                            <Pencil class="size-4" />
+                        </Button>
+
+                        <BUtton
+                            variant="ghost"
+                            size="icon"
+                            :aria-label="`Delete dependency from ${dependency.source_node.name} to ${dependency.target_node.name}`"
+                            class="text-destructive hover:text-destructive"
+                            @click="deleteDependency(dependency)"
+                        >
+                            <Trash2 class="size-4" />
+                        </BUtton>
                     </div>
                 </div>
             </section>

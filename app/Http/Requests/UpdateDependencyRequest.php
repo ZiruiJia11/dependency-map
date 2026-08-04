@@ -20,6 +20,7 @@ class UpdateDependencyRequest extends FormRequest
         $project = $this->route('project');
         $dependency = $this->route('dependency');
 
+        // Confirm the dependency belongs to the nested project before policy checks.
         return $project instanceof Project
             && $dependency instanceof Dependency
             && $dependency->project_id === $project->id
@@ -35,6 +36,7 @@ class UpdateDependencyRequest extends FormRequest
     {
         $project = $this->route('project');
 
+        // Both endpoints must remain within the project being edited.
         return [
             'source_node_id' => [
                 'required',
@@ -77,6 +79,7 @@ class UpdateDependencyRequest extends FormRequest
                 }
 
                 $alreadyExists = $project->dependencies()
+                    // Exclude this row so an unchanged connection can be saved.
                     ->whereKeyNot($dependency->getKey())
                     ->where(
                         'source_node_id',

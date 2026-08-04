@@ -3,6 +3,7 @@
 use App\Models\Project;
 use App\Models\User;
 
+// Domain-level tests document the project ownership boundary used by the policy.
 test('a project belongs to a user', function () {
     $project = Project::factory()->create();
 
