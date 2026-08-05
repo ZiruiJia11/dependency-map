@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Network, Pencil, Plus, Trash2 } from '@lucide/vue';
+import { Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import DependencyForm from '@/components/dependencies/DependencyForm.vue';
+import DependencyGraph from '@/components/dependencies/DependencyGraph.vue';
 import NodeForm from '@/components/nodes/NodeForm.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -167,24 +168,10 @@ defineOptions({
             </div>
         </div>
 
-        <!-- Reserved canvas area for the future interactive dependency graph. -->
-        <section
-            class="flex min-h-72 flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/20 p-8 text-center"
-        >
-            <div
-                class="flex size-12 items-center justify-center rounded-full bg-muted"
-            >
-                <Network class="size-6 text-muted-foreground" />
-            </div>
-
-            <div>
-                <h2 class="font-medium">Dependency Map</h2>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    Interactive dependency map for this project. Add nodes and
-                    dependencies to visualize the relationships between them.
-                </p>
-            </div>
-        </section>
+        <DependencyGraph
+            :nodes="project.nodes ?? []"
+            :dependencies="project.dependencies ?? []"
+        />
 
         <div class="grid gap-6 lg:grid-cols-2">
             <!-- Node CRUD is managed inline so users stay on the project page. -->
