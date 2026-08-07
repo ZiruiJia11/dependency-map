@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash2 } from '@lucide/vue';
-import { ref } from 'vue';
+import {
+    AlertTriangle,
+    Boxes,
+    GitBranch,
+    Pencil,
+    Plus,
+    Trash2,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import DependencyForm from '@/components/dependencies/DependencyForm.vue';
 import DependencyGraph from '@/components/dependencies/DependencyGraph.vue';
 import NodeForm from '@/components/nodes/NodeForm.vue';
@@ -39,6 +46,15 @@ const isEditDependencyOpen = ref(false);
 const editingDependency = ref<Dependency | null>(null);
 const isEditNodeOpen = ref(false);
 const editingNode = ref<Node | null>(null);
+
+// Combines risky and blocked nodes into one attention metric.
+const attentionNodeCount = computed(() => {
+    return (
+        props.project.nodes?.filter((node) =>
+            ['at_risk', 'blocked'].includes(node.status),
+        ).length ?? 0
+    );
+});
 
 function openEditNode(node: Node): void {
     // Store the selected row so the shared form can prefill its current values.
@@ -165,6 +181,98 @@ defineOptions({
                     <Trash2 class="size-4" />
                     Delete
                 </Button>
+            </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div
+                class="group relative overflow-hidden rounded-xl border bg-gradient-to-br from-blue-50 to-background p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:from-blue-950/30"
+            >
+                <div
+                    class="absolute -top-6 -right-6 size-24 rounded-full bg-blue-500/10 blur-2xl"
+                ></div>
+
+                <div class="relative flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">
+                            Nodes
+                        </p>
+
+                        <p class="mt-2 text-3xl font-semibold tracking-tight">
+                            {{ project.nodes?.length ?? 0 }}
+                        </p>
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Project components
+                        </p>
+                    </div>
+
+                    <div
+                        class="rounded-xl bg-blue-500/10 p-2.5 text-blue-600 ring-1 ring-blue-500/20 dark:text-blue-400"
+                    >
+                        <Boxes class="size-5" />
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="group relative overflow-hidden rounded-xl border bg-gradient-to-br from-violet-50 to-background p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:from-violet-950/30"
+            >
+                <div
+                    class="absolute -top-6 -right-6 size-24 rounded-full bg-violet-500/10 blur-2xl"
+                ></div>
+
+                <div class="relative flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">
+                            Dependencies
+                        </p>
+
+                        <p class="mt-2 text-3xl font-semibold tracking-tight">
+                            {{ project.dependencies?.length ?? 0 }}
+                        </p>
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Connections between components
+                        </p>
+                    </div>
+
+                    <div
+                        class="rounded-xl bg-violet-500/10 p-2.5 text-violet-600 ring-1 ring-violet-500/20 dark:text-violet-400"
+                    >
+                        <GitBranch class="size-5" />
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="group relative overflow-hidden rounded-xl border bg-gradient-to-br from-amber-50 to-background p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:col-span-2 xl:col-span-1 dark:from-amber-950/30"
+            >
+                <div
+                    class="absolute -top-6 -right-6 size-24 rounded-full bg-amber-500/10 blur-2xl"
+                ></div>
+
+                <div class="relative flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">
+                            Attention
+                        </p>
+
+                        <p class="mt-2 text-3xl font-semibold tracking-tight">
+                            {{ attentionNodeCount }}
+                        </p>
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Nodes at risk or blocked
+                        </p>
+                    </div>
+
+                    <div
+                        class="rounded-xl bg-red-500/10 p-2.5 text-red-600 ring-1 ring-red-500/20 dark:text-red-400"
+                    >
+                        <AlertTriangle class="size-5" />
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -400,7 +508,7 @@ defineOptions({
                             <Pencil class="size-4" />
                         </Button>
 
-                        <BUtton
+                        <Button
                             variant="ghost"
                             size="icon"
                             :aria-label="`Delete dependency from ${dependency.source_node.name} to ${dependency.target_node.name}`"
@@ -408,7 +516,7 @@ defineOptions({
                             @click="deleteDependency(dependency)"
                         >
                             <Trash2 class="size-4" />
-                        </BUtton>
+                        </Button>
                     </div>
                 </div>
             </section>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNodeRequest;
+use App\Http\Requests\UpdateNodePositionRequest;
 use App\Http\Requests\UpdateNodeRequest;
 use App\Models\Node;
 use App\Models\Project;
@@ -42,6 +43,31 @@ class NodeController extends Controller
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => 'Node updated.',
+        ]);
+
+        return to_route('projects.show', $project);
+    }
+
+    public function updatePosition(
+        UpdateNodePositionRequest $request,
+        Project $project,
+        Node $node,
+    ): RedirectResponse {
+        Gate::authorize('update', $project);
+
+        $node->update($request->validated());
+
+        return to_route('projects.show', $project);
+    }
+
+    public function resetPositions(
+        Project $project,
+    ): RedirectResponse {
+        Gate::authorize('update', $project);
+
+        $project->nodes()->update([
+            'position_x' => null,
+            'position_y' => null,
         ]);
 
         return to_route('projects.show', $project);

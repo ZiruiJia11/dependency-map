@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - sh
+      - -c
+      - >
+        cd public &&
+        exec php -S 0.0.0.0:8000
+        ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php
+    expose:
+      - "8000"
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env.docker
+
+    depends_on:
+      database:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dependency-map.rule=Host(`dependency-map.localhost`)"
+      - "traefik.http.routers.dependency-map.entrypoints=web"
+      - "traefik.http.services.dependency-map.loadbalancer.server.port=8000"
+
+  database:
+    image: postgres:18
+    expose:
+      - "5432"
+    env_file:
+      - .env.docker
+    volumes:
+      - dependency_map_database:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U dependency_map -d dependency_map",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  traefik:
+    image: traefik:v3.7.1
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "127.0.0.1:8081:80"
+      - "127.0.0.1:8082:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  dependency_map_database:

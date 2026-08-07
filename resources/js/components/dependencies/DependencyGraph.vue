@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, ref, useTemplateRef } from 'vue';
 
+import { position as updateNodePosition } from '@/routes/projects/nodes';
+import { destroy as resetNodePositions } from '@/routes/projects/nodes/positions';
 import type { Dependency, Node } from '@/types';
 
 const props = defineProps<{
@@ -38,9 +41,57 @@ interface PositionedDependency {
     targetY: number;
 }
 
+interface CanvasPoint {
+    x: number;
+    y: number;
+}
+
+const draggedPosition = ref<Record<number, CanvasPoint>>({});
+
+const hasCustomPositions = computed(() => {
+    const hasLocalPositions = Object.keys(draggedPosition.value).length > 0;
+
+    const hasSavedPositions = props.nodes.some(
+        (node) => node.position_x !== null && node.position_y !== null,
+    );
+
+    return hasLocalPositions || hasSavedPositions;
+});
+
+const graphRef = useTemplateRef<SVGSVGElement>('graphSvg');
+
+const activeNodeId = ref<number | null>(null);
+
+const dragOffset = ref<CanvasPoint>({
+    x: 0,
+    y: 0,
+});
+
 // Distributes all nodes evenly around an ellipse.
 const positionedNodes = computed<PositionedNode[]>(() => {
     return props.nodes.map((node, index) => {
+        const nodeDraggedPosition = draggedPosition.value[node.id];
+
+        if (nodeDraggedPosition) {
+            return {
+                ...node,
+                ...nodeDraggedPosition,
+            };
+        }
+
+        if (node.position_x !== null && node.position_y !== null) {
+            const savedX = Number(node.position_x);
+            const savedY = Number(node.position_y);
+
+            if (Number.isFinite(savedX) && Number.isFinite(savedY)) {
+                return {
+                    ...node,
+                    x: savedX,
+                    y: savedY,
+                };
+            }
+        }
+
         // Keep a single node in the centre of the graph.
         if (props.nodes.length === 1) {
             return {
@@ -61,6 +112,138 @@ const positionedNodes = computed<PositionedNode[]>(() => {
         };
     });
 });
+
+function getCanvasPoint(event: PointerEvent): CanvasPoint | null {
+    const svg = graphRef.value;
+    const screenMatrix = svg?.getScreenCTM();
+
+    if (!svg || !screenMatrix) {
+        return null;
+    }
+
+    const point = svg.createSVGPoint();
+
+    point.x = event.clientX;
+    point.y = event.clientY;
+
+    const transformedPoint = point.matrixTransform(screenMatrix.inverse());
+
+    return {
+        x: transformedPoint.x,
+        y: transformedPoint.y,
+    };
+}
+
+function startNodeDrag(event: PointerEvent, node: PositionedNode): void {
+    const pointer = getCanvasPoint(event);
+
+    if (!pointer) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const target = event.currentTarget as SVGElement;
+
+    target.setPointerCapture(event.pointerId);
+
+    activeNodeId.value = node.id;
+
+    dragOffset.value = {
+        x: pointer.x - node.x,
+        y: pointer.y - node.y,
+    };
+}
+
+function moveNode(event: PointerEvent): void {
+    if (activeNodeId.value === null) {
+        return;
+    }
+
+    const pointer = getCanvasPoint(event);
+
+    if (!pointer) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const halfWidth = nodeSize.width / 2;
+    const halfHeight = nodeSize.height / 2;
+
+    const position: CanvasPoint = {
+        x: Math.min(
+            canvas.width - halfWidth,
+            Math.max(pointer.x - dragOffset.value.x, halfWidth),
+        ),
+        y: Math.min(
+            canvas.height - halfHeight,
+            Math.max(pointer.y - dragOffset.value.y, halfHeight),
+        ),
+    };
+
+    draggedPosition.value = {
+        ...draggedPosition.value,
+        [activeNodeId.value]: position,
+    };
+}
+
+function stopNodeDrag(event: PointerEvent): void {
+    const target = event.currentTarget as SVGElement;
+    const nodeId = activeNodeId.value;
+
+    if (target.hasPointerCapture(event.pointerId)) {
+        target.releasePointerCapture(event.pointerId);
+    }
+
+    activeNodeId.value = null;
+
+    if (nodeId === null) {
+        return;
+    }
+
+    const node = props.nodes.find((item) => item.id === nodeId);
+    const position = draggedPosition.value[nodeId];
+
+    if (!node || !position) {
+        return;
+    }
+
+    router.patch(
+        updateNodePosition.url({
+            project: node.project_id,
+            node: node.id,
+        }),
+        {
+            position_x: position.x,
+            position_y: position.y,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+        },
+    );
+}
+
+function resetLayout(): void {
+    const projectId = props.nodes[0]?.project_id;
+
+    if (projectId === undefined) {
+        draggedPosition.value = {};
+        activeNodeId.value = null;
+
+        return;
+    }
+
+    router.delete(resetNodePositions.url(projectId), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            draggedPosition.value = {};
+            activeNodeId.value = null;
+        },
+    });
+}
 
 // Converts dependencies into SVG line coordinates.
 const positionedDependencies = computed<PositionedDependency[]>(() => {
@@ -131,12 +314,23 @@ function getNodeClasses(status: string): string {
 
 <template>
     <section class="rounded-xl border bg-card text-card-foreground">
-        <div class="border-b px-5 py-4">
-            <h2 class="font-semibold">Dependency Map</h2>
+        <div class="flex items-start justify-between gap-4 border-b px-5 py-4">
+            <div>
+                <h2 class="font-semibold">Dependency Map</h2>
 
-            <p class="mt-1 text-sm text-muted-foreground">
-                Interactive dependency map for this project.
-            </p>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Drag nodes to rearrange the project map.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                :disabled="!hasCustomPositions"
+                class="rounded-md border bg-background px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background"
+                @click="resetLayout"
+            >
+                Reset layout
+            </button>
         </div>
 
         <div
@@ -181,6 +375,7 @@ function getNodeClasses(status: string): string {
             class="overflow-x-auto border-t bg-muted/10 p-3"
         >
             <svg
+                ref="graphSvg"
                 :viewBox="`0 0 ${canvas.width} ${canvas.height}`"
                 class="h-60 w-full min-w-xl"
                 role="img"
@@ -227,6 +422,16 @@ function getNodeClasses(status: string): string {
                             ${node.y - nodeSize.height / 2}
                         )
                     `"
+                    :class="
+                        activeNodeId === node.id
+                            ? 'cursor-grabbing'
+                            : 'cursor-grab'
+                    "
+                    style="touch-action: none"
+                    @pointerdown="startNodeDrag($event, node)"
+                    @pointermove="moveNode"
+                    @pointerup="stopNodeDrag"
+                    @pointercancel="stopNodeDrag"
                 >
                     <rect
                         :width="nodeSize.width"
